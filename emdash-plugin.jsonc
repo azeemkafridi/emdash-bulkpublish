@@ -1,0 +1,35 @@
+{
+	"$schema": "./node_modules/@emdash-cms/plugin-cli/schemas/emdash-plugin.schema.json",
+
+	"slug": "bulkpublish",
+	// TODO: replace with the DID of the Atmosphere account we publish under
+	// (`emdash-plugin login <handle>` then `emdash-plugin whoami`).
+	"publisher": "did:plc:REPLACE_ME",
+	"name": "BulkPublish",
+	"description": "Share posts to Instagram, X, LinkedIn, TikTok and 11 more networks the moment you publish.",
+	"keywords": ["social media", "scheduling", "auto share", "instagram", "linkedin"],
+	"license": "MIT",
+	"author": { "name": "BulkPublish", "url": "https://www.bulkpublish.com" },
+	"security": { "email": "security@bulkpublish.com" },
+	"repo": "https://github.com/bulkpublish/emdash-bulkpublish",
+
+	// Trust contract. content:read is what the runtime requires for
+	// content:afterPublish; network is pinned to the one API host. The
+	// API key is a secret setting, encrypted at rest by EmDash.
+	"capabilities": ["content:read", "network:request"],
+	"allowedHosts": ["app.bulkpublish.com"],
+	"storage": {
+		"shares": { "indexes": ["contentId", "createdAt", "status"] }
+	},
+
+	"admin": {
+		"settingsSchema": {
+			"apiKey": { "type": "secret", "label": "BulkPublish API key" }
+		},
+		"pages": [{ "path": "/settings", "label": "BulkPublish", "icon": "send" }],
+		"widgets": [{ "id": "status", "title": "Social shares", "size": "third" }],
+		"editorPanels": [{ "id": "share", "title": "Share to social", "route": "editor/share", "collections": ["posts"] }]
+	},
+
+	"release": { "requires": { "env:emdash": ">=1.0.0" } }
+}
