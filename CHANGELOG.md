@@ -7,3 +7,4 @@
 - Attaches the featured image; networks that need one are skipped when a post has none, with the reason shown.
 - Share to social editor panel with Share now / Share again, a dashboard widget, and a recent-shares log in settings.
 - API key is checked against BulkPublish before it is saved.
+- A share that fails cleans up after itself: no leftover draft or image in BulkPublish.

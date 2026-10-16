@@ -21,9 +21,9 @@
 	},
 
 	// Trust contract. content:read is what the runtime requires for
-	// content:afterPublish, media:read lets it attach the featured image; network is pinned to the one API host. The
+	// content:afterPublish, media:read + media:bytes:read let it attach the featured image; network is pinned to the one API host. The
 	// API key is a secret setting, encrypted at rest by EmDash.
-	"capabilities": ["content:read", "media:read", "network:request"],
+	"capabilities": ["content:read", "media:read", "media:bytes:read", "network:request"],
 	"allowedHosts": ["app.bulkpublish.com"],
 	"storage": {
 		"shares": { "indexes": ["contentId", "createdAt", "status"] }

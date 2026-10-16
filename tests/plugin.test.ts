@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import plugin, { __test } from "../src/plugin";
-import type { ShareRecord } from "../src/lib";
+import { platformLength, type ShareRecord } from "../src/lib";
 import { IMAGE, IMAGE_BYTES, fakeCtx, post } from "./fake-ctx";
 
 const KEY = "bp_" + "a".repeat(40);
@@ -35,7 +35,7 @@ describe("share: what gets sent", () => {
 		expect(create.headers.Authorization).toBe(`Bearer ${KEY}`);
 		expect(f.calls.some((c) => c.path === "/api/posts/2001/publish")).toBe(true);
 		expect(rec.skipped?.map((s) => s.platform)).toEqual(["instagram", "youtube"]);
-		expect(rec.sentTo).toEqual(["Bluesky · Test Bluesky", "LinkedIn · Test LinkedIn"]);
+		expect(rec.sentTo).toEqual(["Bluesky", "LinkedIn"]);
 	});
 
 	it("uploads the featured image, attaches it, and asks Threads for an image post", async () => {
@@ -60,17 +60,27 @@ describe("share: what gets sent", () => {
 		expect(rec.skipped?.[0]).toMatchObject({ platform: "instagram" });
 	});
 
-	it("shortens the caption for X only, keeping the link", async () => {
-		const f = fakeCtx(base([309, 312]));
+	it("fits a long caption to the shortest network, and gives the rest the full one", async () => {
+		const f = fakeCtx(base([308, 309, 312]));
 		const long = "A very long title ".repeat(25).trim();
-		await __test.share(f.ctx, entry({ title: long, excerpt: "e".repeat(300) }));
+		const rec = await __test.share(f.ctx, entry({ title: long, excerpt: "e".repeat(300) }));
+		expect(rec.status).toBe("sent");
 		const body = f.calls.find((c) => c.method === "POST" && c.path === "/api/posts")!.body as {
 			content: string;
 			platformContent: Record<string, string>;
 		};
-		expect(body.content.length).toBeGreaterThan(280);
-		expect(body.platformContent.x.endsWith("https://blog.test/posts/hello-world")).toBe(true);
-		expect(body.platformContent.linkedin).toBeUndefined();
+		expect(platformLength(body.content, "x")).toBeLessThanOrEqual(280);
+		expect(platformLength(body.content, "bluesky")).toBeLessThanOrEqual(300);
+		expect(body.content.endsWith("https://blog.test/posts/hello-world")).toBe(true);
+		expect(body.platformContent.linkedin.length).toBeGreaterThan(400);
+		expect(body.platformContent.x).toBeUndefined();
+	});
+
+	it("leaves a caption that fits everywhere alone", async () => {
+		const f = fakeCtx(base([308, 309, 312]));
+		await __test.share(f.ctx, entry({ title: "Short" }));
+		const body = f.calls.find((c) => c.method === "POST" && c.path === "/api/posts")!.body as Record<string, unknown>;
+		expect(body.platformContent).toBeUndefined();
 	});
 
 	it("still shares text when the image is too big to read", async () => {
@@ -90,6 +100,40 @@ describe("share: what gets sent", () => {
 });
 
 describe("share: failures", () => {
+	it("deletes the uploaded image when the post can't be created", async () => {
+		const f = fakeCtx({
+			...base([309, 310]),
+			media: { MEDIA1: IMAGE_BYTES },
+			routes: { "POST /api/posts": () => ({ status: 429, body: { error: { message: "Daily limit reached" } } }) },
+		});
+		const rec = await __test.share(f.ctx, entry({ title: "T", featured_image: IMAGE }));
+		expect(rec.error).toBe("Daily limit reached");
+		expect(f.calls.some((c) => c.method === "DELETE" && c.path === "/api/media/125")).toBe(true);
+	});
+
+	it("keeps the image when the post goes out", async () => {
+		const f = fakeCtx({ ...base([310]), media: { MEDIA1: IMAGE_BYTES } });
+		await __test.share(f.ctx, entry({ title: "T", featured_image: IMAGE }));
+		expect(f.calls.some((c) => c.method === "DELETE")).toBe(false);
+	});
+
+	it("doesn't upload an image when no chosen channel could post at all", async () => {
+		const f = fakeCtx({ ...base([313, 314]), media: { MEDIA1: IMAGE_BYTES } });
+		await __test.share(f.ctx, entry({ title: "T", featured_image: IMAGE }));
+		expect(f.calls.some((c) => c.path === "/api/media")).toBe(false);
+	});
+
+	it("names the account only when a network appears twice", async () => {
+		const routes = { "GET /api/channels": () => ({ status: 200, body: { channels: [
+			{ id: 1, platform: "x", accountName: "Brand" },
+			{ id: 2, platform: "x", accountName: "Founder" },
+			{ id: 3, platform: "linkedin", accountName: "Co" },
+		] } }) };
+		const f = fakeCtx({ ...base([1, 2, 3]), routes });
+		const rec = await __test.share(f.ctx, entry({ title: "T" }));
+		expect(rec.sentTo).toEqual(["X (Brand)", "X (Founder)", "LinkedIn"]);
+	});
+
 	it("deletes the draft when publishing it is refused", async () => {
 		const f = fakeCtx({
 			...base([309]),

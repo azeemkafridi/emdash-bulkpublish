@@ -273,12 +273,21 @@ export function buildPostBody(
 	vars: { title: string; url: string; excerpt: string },
 	mediaId: number | null,
 ) {
-	const content = renderCaption(template, vars);
+	const platforms = [...new Set(targets.map((t) => t.platform))];
+	const fitted = new Map(platforms.map((p) => [p, captionFor(p, template, vars)]));
+	// BulkPublish checks the main caption against every destination's limit,
+	// even one that has its own caption. So the main caption is the version
+	// that fits everywhere, and networks with room get the full one.
+	const fitsAll = (text: string) =>
+		platforms.every((p) => !CHAR_LIMITS[p] || platformLength(text, p) <= CHAR_LIMITS[p]);
+	const candidates = [renderCaption(template, vars), ...fitted.values()];
+	const content =
+		candidates.find(fitsAll) ??
+		candidates.reduce((a, b) => ([...a].length <= [...b].length ? a : b));
 	const platformContent: Record<string, string> = {};
 	const postTypeOverrides: Record<string, string> = {};
-	for (const p of new Set(targets.map((t) => t.platform))) {
-		const fitted = captionFor(p, template, vars);
-		if (fitted !== content) platformContent[p] = fitted;
+	for (const p of platforms) {
+		if (fitted.get(p) !== content) platformContent[p] = fitted.get(p)!;
 		if (mediaId !== null && IMAGE_POST_TYPE[p]) postTypeOverrides[p] = IMAGE_POST_TYPE[p];
 	}
 	return {

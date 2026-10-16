@@ -173,12 +173,18 @@ async function share(ctx: Ctx, entry: ShareInput, opts: { force?: boolean } = {}
 	const cfg = await getConfig(ctx);
 	let rec: ShareRecord = claim;
 	let draftId: number | null = null;
+	let mediaId: number | null = null;
 	try {
 		if (!cfg.apiKey) throw new ApiError("Add your BulkPublish API key in Settings.", 0);
 		if (cfg.channelIds.length === 0) throw new ApiError("Pick at least one channel in BulkPublish settings.", 0);
 
 		const channels = await listChannels(ctx, cfg);
-		const image = await uploadImage(ctx, cfg, entry.data);
+		// Upload only when the post could go somewhere even with an image.
+		const wouldHaveImage = cfg.attachImage && imageOf(entry.data, cfg.imageField) !== null;
+		const image = wouldHaveImage && planTargets(channels, cfg.channelIds, true).targets.length > 0
+			? await uploadImage(ctx, cfg, entry.data)
+			: { id: null };
+		mediaId = image.id;
 		const { targets, skipped } = planTargets(channels, cfg.channelIds, image.id !== null);
 		const notes: Skipped[] = image.note ? [{ channelId: 0, platform: "image", reason: image.note }] : [];
 		if (targets.length === 0) {
@@ -195,7 +201,7 @@ async function share(ctx: Ctx, entry: ShareInput, opts: { force?: boolean } = {}
 				...claim,
 				postId,
 				status: "sent",
-				sentTo: targets.map((t) => `${platformLabel(t.platform)} · ${t.name}`),
+				sentTo: describeTargets(targets),
 				skipped: [...notes, ...skipped],
 				updatedAt: new Date().toISOString(),
 			};
@@ -209,8 +215,19 @@ async function share(ctx: Ctx, entry: ShareInput, opts: { force?: boolean } = {}
 	if (draftId !== null) {
 		await api(ctx, cfg, "DELETE", `/api/posts/${draftId}`).catch(() => undefined);
 	}
+	// Likewise the image: unused, it would only take up the account's storage.
+	if (rec.status !== "sent" && mediaId !== null) {
+		await api(ctx, cfg, "DELETE", `/api/media/${mediaId}`).catch(() => undefined);
+	}
 	await shares.put(entry.id, rec);
 	return rec;
+}
+
+/** "Bluesky, LinkedIn, X" — with the account name only where a network appears twice. */
+function describeTargets(targets: Channel[]): string[] {
+	const count = new Map<string, number>();
+	for (const t of targets) count.set(t.platform, (count.get(t.platform) ?? 0) + 1);
+	return targets.map((t) => (count.get(t.platform)! > 1 ? `${platformLabel(t.platform)} (${t.name})` : platformLabel(t.platform)));
 }
 
 // ── Block Kit ──
@@ -291,7 +308,6 @@ async function settingsPage(ctx: Ctx, extra: Block[] = []) {
 					block_id: "bp-advanced",
 					fields: [
 						{ type: "text_input", action_id: "imageField", label: "Image field", placeholder: "Found automatically", initial_value: cfg.imageField },
-						{ type: "text_input", action_id: "apiBase", label: "API address", placeholder: DEFAULT_API_BASE, initial_value: cfg.apiBase === DEFAULT_API_BASE ? "" : cfg.apiBase },
 					],
 					submit: { label: "Save advanced", action_id: "save_advanced" },
 				},

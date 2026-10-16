@@ -1,6 +1,27 @@
 // A small in-memory stand-in for the EmDash plugin context. Response shapes
 // for the BulkPublish API were captured from a running server.
 
+import { CHAR_LIMITS, platformLength } from "../src/lib";
+
+/**
+ * The length check POST /api/posts runs: the main caption against EVERY
+ * destination (overrides or not), then each override against its own network.
+ */
+export function serverLengthErrors(body: { content?: string; channels: { platform: string }[]; platformContent?: Record<string, string> }) {
+	const errors: string[] = [];
+	for (const { platform } of body.channels) {
+		const limit = CHAR_LIMITS[platform];
+		const len = platformLength(body.content ?? "", platform);
+		if (limit && len > limit) errors.push(`${platform}: content exceeds ${limit} character limit (${len})`);
+	}
+	for (const [platform, text] of Object.entries(body.platformContent ?? {})) {
+		const limit = CHAR_LIMITS[platform];
+		const len = platformLength(text, platform);
+		if (limit && len > limit) errors.push(`${platform}: content exceeds ${limit} character limit (${len})`);
+	}
+	return errors;
+}
+
 export interface Call {
 	method: string;
 	path: string;
@@ -26,7 +47,11 @@ export function defaultRoutes(): Record<string, Handler> {
 	return {
 		"GET /api/channels": () => ({ status: 200, body: { channels: CHANNELS } }),
 		"POST /api/media": () => ({ status: 201, body: { file: { id: 125, fileName: "x.jpg", mimeType: "image/jpeg" } } }),
-		"POST /api/posts": () => ({ status: 201, body: { id: ++nextPost, status: "draft" } }),
+		"POST /api/posts": (call) => {
+			const errors = serverLengthErrors(call.body as never);
+			if (errors.length) return { status: 400, body: { error: { message: errors.join("; "), code: "VALIDATION_ERROR" } } };
+			return { status: 201, body: { id: ++nextPost, status: "draft" } };
+		},
 		"POST /api/posts/:id/publish": () => ({ status: 200, body: { success: true } }),
 		"DELETE /api/posts/:id": () => ({ status: 200, body: { success: true } }),
 	};
