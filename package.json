@@ -1,17 +1,34 @@
 {
 	"name": "emdash-plugin-bulkpublish",
-	"version": "0.1.0",
+	"version": "1.0.0",
 	"description": "Share EmDash posts to 15 social networks through BulkPublish",
 	"type": "module",
 	"main": "dist/index.mjs",
 	"exports": {
-		".": { "import": "./dist/index.mjs", "types": "./dist/index.d.mts" },
+		".": {
+			"import": "./dist/index.mjs",
+			"types": "./dist/index.d.mts"
+		},
 		"./sandbox": "./dist/plugin.mjs"
 	},
-	"files": ["dist", "emdash-plugin.jsonc"],
-	"keywords": ["emdash", "plugin", "social-media", "scheduling", "bulkpublish"],
+	"files": [
+		"dist",
+		"emdash-plugin.jsonc",
+		"listing",
+		"assets",
+		"CHANGELOG.md"
+	],
+	"keywords": [
+		"emdash",
+		"plugin",
+		"social-media",
+		"scheduling",
+		"bulkpublish"
+	],
 	"license": "MIT",
-	"peerDependencies": { "emdash": ">=1.0.0" },
+	"peerDependencies": {
+		"emdash": ">=1.0.0"
+	},
 	"devDependencies": {
 		"@emdash-cms/plugin-cli": "0.13.4",
 		"emdash": "1.3.0",
@@ -26,5 +43,8 @@
 		"test": "vitest run",
 		"typecheck": "tsc --noEmit"
 	},
-	"repository": { "type": "git", "url": "git+https://github.com/bulkpublish/emdash-bulkpublish.git" }
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/bulkpublish/emdash-bulkpublish.git"
+	}
 }

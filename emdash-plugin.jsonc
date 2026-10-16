@@ -12,11 +12,18 @@
 	"author": { "name": "BulkPublish", "url": "https://www.bulkpublish.com" },
 	"security": { "email": "security@bulkpublish.com" },
 	"repo": "https://github.com/bulkpublish/emdash-bulkpublish",
+	"sections": {
+		"description": { "file": "./listing/description.md" },
+		"installation": { "file": "./listing/installation.md" },
+		"faq": { "file": "./listing/faq.md" },
+		"changelog": { "file": "./CHANGELOG.md" },
+		"security": { "file": "./listing/security.md" }
+	},
 
 	// Trust contract. content:read is what the runtime requires for
-	// content:afterPublish; network is pinned to the one API host. The
+	// content:afterPublish, media:read lets it attach the featured image; network is pinned to the one API host. The
 	// API key is a secret setting, encrypted at rest by EmDash.
-	"capabilities": ["content:read", "network:request"],
+	"capabilities": ["content:read", "media:read", "network:request"],
 	"allowedHosts": ["app.bulkpublish.com"],
 	"storage": {
 		"shares": { "indexes": ["contentId", "createdAt", "status"] }
@@ -31,5 +38,8 @@
 		"editorPanels": [{ "id": "share", "title": "Share to social", "route": "editor/share", "collections": ["posts"] }]
 	},
 
-	"release": { "requires": { "env:emdash": ">=1.0.0" } }
+	"release": {
+		"requires": { "env:emdash": ">=1.0.0" },
+		"artifacts": { "icon": { "file": "./assets/icon.png" } }
+	}
 }
