@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.1
+
+- Corrected the listing summary: posts aren't shared to TikTok or YouTube, which only take videos.
+
 ## 1.0.0
 
 - Shares posts to your BulkPublish channels when they are published, once per post.

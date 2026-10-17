@@ -6,7 +6,7 @@
 	// so moving the handle to a bulkpublish.com domain later is safe.
 	"publisher": "did:plc:5f7pkxcmsmhegwncjo2wra2k",
 	"name": "BulkPublish",
-	"description": "Share posts to Instagram, X, LinkedIn, TikTok and 11 more networks the moment you publish.",
+	"description": "Share posts to Instagram, Facebook, X, LinkedIn, Threads, Bluesky and more the moment you publish.",
 	"keywords": ["social media", "scheduling", "auto share", "instagram", "linkedin"],
 	"license": "MIT",
 	"author": { "name": "BulkPublish", "url": "https://www.bulkpublish.com" },

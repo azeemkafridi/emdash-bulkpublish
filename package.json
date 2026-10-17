@@ -1,7 +1,7 @@
 {
 	"name": "emdash-plugin-bulkpublish",
-	"version": "1.0.0",
-	"description": "Share EmDash posts to 15 social networks through BulkPublish",
+	"version": "1.0.1",
+	"description": "Share EmDash posts to your social accounts through BulkPublish",
 	"type": "module",
 	"main": "dist/index.mjs",
 	"exports": {
