@@ -45,6 +45,6 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/bulkpublish/emdash-bulkpublish.git"
+		"url": "git+https://github.com/azeemkafridi/emdash-bulkpublish.git"
 	}
 }
