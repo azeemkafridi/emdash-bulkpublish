@@ -2,9 +2,9 @@
 	"$schema": "./node_modules/@emdash-cms/plugin-cli/schemas/emdash-plugin.schema.json",
 
 	"slug": "bulkpublish",
-	// TODO: replace with the DID of the Atmosphere account we publish under
-	// (`emdash-plugin login <handle>` then `emdash-plugin whoami`).
-	"publisher": "did:plc:REPLACE_ME",
+	// @bulkpublish-plugin.bsky.social. Pinned by DID, which never changes,
+	// so moving the handle to a bulkpublish.com domain later is safe.
+	"publisher": "did:plc:5f7pkxcmsmhegwncjo2wra2k",
 	"name": "BulkPublish",
 	"description": "Share posts to Instagram, X, LinkedIn, TikTok and 11 more networks the moment you publish.",
 	"keywords": ["social media", "scheduling", "auto share", "instagram", "linkedin"],
